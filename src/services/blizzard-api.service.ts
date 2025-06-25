@@ -61,9 +61,10 @@ export class BlizzardApiService {
 
     try {
       const clientId = process.env.NEXT_PUBLIC_BLIZZARD_CLIENT_ID;
-      const clientSecret = process.env.NEXT_PUBLIC_BLIZZARD_CLIENT_SECRET;
+      const clientSecret = process.env.BLIZZARD_CLIENT_SECRET; // Remove NEXT_PUBLIC_ for security
 
       if (!clientId || !clientSecret) {
+        console.error('Missing credentials:', { clientId: !!clientId, clientSecret: !!clientSecret });
         throw new Error('Blizzard API credentials not configured');
       }
 
