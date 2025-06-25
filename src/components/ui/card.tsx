@@ -3,11 +3,11 @@ import { cn } from '@/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 const cardVariants = cva(
-  'wow-card rounded-xl border border-white/10 bg-black/40 backdrop-blur-md shadow-wow transition-all duration-300',
+  'wow-card rounded-xl border border-white/10 bg-black/40 backdrop-blur-md shadow-wow',
   {
     variants: {
       variant: {
-        default: 'hover:shadow-wow-lg hover:border-white/20',
+        default: '',
         interactive: 'cursor-pointer hover:shadow-wow-lg hover:border-white/20 hover:scale-[1.02]',
         ghost: 'border-transparent bg-transparent shadow-none',
       },

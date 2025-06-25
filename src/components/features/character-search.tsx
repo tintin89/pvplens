@@ -1,16 +1,17 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Users, Zap } from 'lucide-react';
+import { Search, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { useSearch } from '@/hooks';
 import { isValidCharacterName, realmNameToSlug } from '@/utils';
 
 interface CharacterSearchProps {
   onSearch: (characterName: string, realmSlug: string, region: string) => void;
   isLoading?: boolean;
+  error?: string | null;
 }
 
 const popularRealms = [
@@ -25,7 +26,7 @@ const regions = [
   { value: 'tw', label: 'Taiwan' }
 ];
 
-export function CharacterSearch({ onSearch, isLoading = false }: CharacterSearchProps) {
+export function CharacterSearch({ onSearch, isLoading = false, error }: CharacterSearchProps) {
   const [selectedRegion, setSelectedRegion] = useState('us');
   const [selectedRealm, setSelectedRealm] = useState('');
   const { value: characterName, setValue: setCharacterName } = useSearch('', 300);
@@ -68,27 +69,22 @@ export function CharacterSearch({ onSearch, isLoading = false }: CharacterSearch
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader className="text-center">
-        <CardTitle className="flex items-center justify-center gap-2 text-3xl font-bold wow-gradient-text">
-          <Zap className="h-8 w-8 text-primary" />
-          Character Lookup
-        </CardTitle>
-        <p className="text-white/70 mt-2">
-          Search for World of Warcraft characters and view their PVP statistics
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 pt-8">
         {/* Region Selection */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-white">Region</label>
+          <label className="text-sm font-medium text-yellow-400">Region</label>
           <div className="grid grid-cols-2 gap-2">
             {regions.map((region) => (
               <Button
                 key={region.value}
-                variant={selectedRegion === region.value ? 'default' : 'outline'}
+                variant="ghost"
                 size="sm"
                 onClick={() => setSelectedRegion(region.value)}
-                className="justify-start"
+                className={`justify-start ${
+                  selectedRegion === region.value 
+                    ? 'region-selected' 
+                    : 'region-unselected'
+                }`}
               >
                 {region.label}
               </Button>
@@ -98,7 +94,7 @@ export function CharacterSearch({ onSearch, isLoading = false }: CharacterSearch
 
         {/* Character Name Input */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-white">Character Name</label>
+          <label className="text-sm font-medium text-yellow-400">Character Name</label>
           <Input
             placeholder="Enter character name..."
             value={characterName}
@@ -116,7 +112,7 @@ export function CharacterSearch({ onSearch, isLoading = false }: CharacterSearch
 
         {/* Realm Selection */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-white">Realm</label>
+          <label className="text-sm font-medium text-yellow-400">Realm</label>
           <Input
             placeholder="Enter realm name..."
             value={selectedRealm}
@@ -133,7 +129,7 @@ export function CharacterSearch({ onSearch, isLoading = false }: CharacterSearch
           
           {/* Popular Realms */}
           <div className="space-y-2">
-            <p className="text-xs text-white/50">Popular Realms:</p>
+            <p className="text-xs text-yellow-400/70">Popular Realms:</p>
             <div className="flex flex-wrap gap-1">
               {popularRealms.map((realm) => (
                 <Button
@@ -141,7 +137,11 @@ export function CharacterSearch({ onSearch, isLoading = false }: CharacterSearch
                   variant="ghost"
                   size="sm"
                   onClick={() => handleQuickRealmSelect(realm)}
-                  className="h-7 px-2 py-1 text-xs hover:bg-primary/20"
+                  className={`h-7 px-2 py-1 text-xs transition-all duration-200 ${
+                    selectedRealm === realm 
+                      ? 'realm-button-selected' 
+                      : 'popular-realm-button'
+                  }`}
                 >
                   {realm}
                 </Button>
@@ -149,6 +149,14 @@ export function CharacterSearch({ onSearch, isLoading = false }: CharacterSearch
             </div>
           </div>
         </div>
+
+        {/* Search Error Display */}
+        {error && (
+          <div className="wow-card bg-red-500/10 border-red-500/30 p-4">
+            <div className="text-red-400 font-medium mb-1">Search Error</div>
+            <p className="text-red-300 text-sm">{error}</p>
+          </div>
+        )}
 
         {/* Search Button */}
         <Button

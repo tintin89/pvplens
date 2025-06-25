@@ -36,26 +36,39 @@ export function calculateWinRate(won: number, total: number): number {
  * Format rating with appropriate color class
  */
 export function getRatingColor(rating: number): string {
-  if (rating >= 2400) return 'text-purple-400'; // Gladiator
-  if (rating >= 2100) return 'text-orange-400'; // Elite
-  if (rating >= 1800) return 'text-blue-400'; // Duelist
-  if (rating >= 1600) return 'text-green-400'; // Rival
+  if (rating >= 2400) return 'text-purple-400'; // Gladiator/Elite
+  if (rating >= 2100) return 'text-blue-400';   // Duelist
+  if (rating >= 1800) return 'text-green-400';  // Rival
   if (rating >= 1400) return 'text-yellow-400'; // Challenger
-  if (rating >= 1000) return 'text-gray-400'; // Combatant
+  if (rating >= 1000) return 'text-gray-400';   // Combatant
   return 'text-gray-500'; // Unranked
 }
 
 /**
- * Get rating tier name
+ * Get rating tier name based on WoW PvP rating system
+ * Note: Gladiator also requires 50+ wins at 2400+ rating, but we only show based on rating here
  */
 export function getRatingTier(rating: number): string {
-  if (rating >= 2400) return 'Gladiator';
-  if (rating >= 2100) return 'Elite';
-  if (rating >= 1800) return 'Duelist';
-  if (rating >= 1600) return 'Rival';
-  if (rating >= 1400) return 'Challenger';
-  if (rating >= 1000) return 'Combatant';
-  return 'Unranked';
+  if (rating >= 2400) return 'Elite';      // 2400+ (Gladiator needs 50 wins too)
+  if (rating >= 2100) return 'Duelist';    // 2100-2399  
+  if (rating >= 1800) return 'Rival';      // 1800-2099
+  if (rating >= 1400) return 'Challenger'; // 1400-1799
+  if (rating >= 1000) return 'Combatant';  // 1000-1399
+  return 'Unranked';                       // 0-999
+}
+
+/**
+ * Get rating tier name including Gladiator status based on wins
+ * This function can be used when win count is available
+ */
+export function getRatingTierWithWins(rating: number, wins: number = 0): string {
+  if (rating >= 2400 && wins >= 50) return 'Gladiator'; // 2400+ rating AND 50+ wins
+  if (rating >= 2400) return 'Elite';      // 2400+ rating but less than 50 wins
+  if (rating >= 2100) return 'Duelist';    // 2100-2399  
+  if (rating >= 1800) return 'Rival';      // 1800-2099
+  if (rating >= 1400) return 'Challenger'; // 1400-1799
+  if (rating >= 1000) return 'Combatant';  // 1000-1399
+  return 'Unranked';                       // 0-999
 }
 
 /**
