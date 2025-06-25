@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CharacterService } from '@/services/character.service';
-import { Character, CharacterPvpSummary, SearchFilters } from '@/types/wow';
+import { SearchFilters } from '@/types/wow';
 
 const characterService = new CharacterService();
 

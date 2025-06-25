@@ -11,8 +11,7 @@ import {
   calculateWinRate, 
   getRatingColor, 
   getRatingTier, 
-  getClassColor, 
-  getFactionColor,
+  getClassColor,
   formatRelativeTime,
   formatBracketName
 } from '@/utils';
@@ -21,6 +20,18 @@ interface CharacterProfileProps {
   characterName: string;
   realmSlug: string;
   region: string;
+}
+
+interface BracketData {
+  rating: number;
+  bracket: {
+    slug: string;
+  };
+  season_match_statistics?: {
+    won: number;
+    lost: number;
+    played: number;
+  };
 }
 
 export function CharacterProfile({ characterName, realmSlug, region }: CharacterProfileProps) {
@@ -32,7 +43,7 @@ export function CharacterProfile({ characterName, realmSlug, region }: Character
       error={error?.message}
       loadingComponent={<CharacterProfileSkeleton />}
     >
-      {data && (
+      {data && data.profile && (
         <div className="space-y-6">
           {/* Character Header */}
           <Card className="relative overflow-hidden">
@@ -122,7 +133,7 @@ export function CharacterProfile({ characterName, realmSlug, region }: Character
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-primary">
-                  {data.pvpSummary.honor_level || 0}
+                  {data.pvp?.honor_level || 0}
                 </div>
                 <p className="text-white/60 text-sm">Current Honor Level</p>
               </CardContent>
@@ -137,7 +148,7 @@ export function CharacterProfile({ characterName, realmSlug, region }: Character
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-red-400">
-                  {formatNumber(data.pvpSummary.honorable_kills || 0)}
+                  {formatNumber(data.pvp?.honorable_kills || 0)}
                 </div>
                 <p className="text-white/60 text-sm">Total Kills</p>
               </CardContent>
@@ -152,7 +163,7 @@ export function CharacterProfile({ characterName, realmSlug, region }: Character
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-green-400">
-                  {Object.keys(data.pvpSummary.brackets || {}).length}
+                  {Object.keys(data.pvp?.brackets || {}).length}
                 </div>
                 <p className="text-white/60 text-sm">Rated Brackets</p>
               </CardContent>
@@ -160,7 +171,7 @@ export function CharacterProfile({ characterName, realmSlug, region }: Character
           </div>
 
           {/* PvP Brackets */}
-          {data.pvpSummary.brackets && Object.keys(data.pvpSummary.brackets).length > 0 && (
+          {data.pvp?.brackets && Object.keys(data.pvp.brackets).length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -170,14 +181,14 @@ export function CharacterProfile({ characterName, realmSlug, region }: Character
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {Object.entries(data.pvpSummary.brackets).map(([bracketType, bracketData]: [string, any]) => (
+                  {Object.entries(data.pvp.brackets).map(([bracketType, bracketData]: [string, BracketData]) => (
                     <div key={bracketType} className="wow-card bg-black/20 p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <h4 className="font-medium text-white">
                           {formatBracketName(bracketData.bracket.slug)}
                         </h4>
                         <Badge 
-                          variant={getRatingTier(bracketData.rating).toLowerCase() as any}
+                          variant={getRatingTier(bracketData.rating).toLowerCase() as 'gladiator' | 'elite' | 'duelist' | 'rival' | 'challenger' | 'combatant' | 'unranked'}
                           className="text-xs"
                         >
                           {getRatingTier(bracketData.rating)}
@@ -232,30 +243,28 @@ export function CharacterProfile({ characterName, realmSlug, region }: Character
             </Card>
           )}
 
-          {/* Equipment Summary */}
-          {data.equipment && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Equipment</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-primary">
-                      {data.profile.average_item_level || 'N/A'}
-                    </div>
-                    <p className="text-white/60 text-sm">Average Item Level</p>
+          {/* Item Level Summary */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Item Level</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary">
+                    {data.profile.average_item_level || 'N/A'}
                   </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-secondary">
-                      {data.profile.equipped_item_level || 'N/A'}
-                    </div>
-                    <p className="text-white/60 text-sm">Equipped Item Level</p>
-                  </div>
+                  <p className="text-white/60 text-sm">Average Item Level</p>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-secondary">
+                    {data.profile.equipped_item_level || 'N/A'}
+                  </div>
+                  <p className="text-white/60 text-sm">Equipped Item Level</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </LoadingState>

@@ -1,36 +1,46 @@
-﻿export default function HomePage() {
+'use client';
+
+import { CharacterSearch } from '@/components/features/character-search';
+import { CharacterProfile } from '@/components/features/character-profile';
+import { useState } from 'react';
+
+export default function HomePage() {
+  const [selectedCharacter, setSelectedCharacter] = useState<{
+    name: string;
+    realm: string;
+    region: string;
+  } | null>(null);
+
+  const handleSearch = (characterName: string, realmSlug: string, region: string) => {
+    setSelectedCharacter({
+      name: characterName,
+      realm: realmSlug,
+      region,
+    });
+  };
+
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      background: '#1a1a2e', 
-      color: 'white',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontFamily: 'system-ui, sans-serif'
-    }}>
-      <div style={{ textAlign: 'center', maxWidth: '600px', padding: '2rem' }}>
-        <h1 style={{ 
-          fontSize: '3rem', 
-          marginBottom: '1rem',
-          color: '#FFD700'
-        }}>
-          PVP Lens
-        </h1>
-        <p style={{ 
-          fontSize: '1.2rem', 
-          marginBottom: '2rem',
-          color: '#cccccc'
-        }}>
-          World of Warcraft PVP Statistics Tracker
-        </p>
-        <div style={{
-          padding: '1rem',
-          background: '#2a2a4e',
-          borderRadius: '8px',
-          border: '1px solid #444'
-        }}>
-          ✅ Application Running Without Errors
+    <div className="min-h-screen hero-background">
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-6xl font-bold font-wow text-wow-gold mb-4">
+            PVP Lens
+          </h1>
+          <p className="text-xl text-white/80 max-w-2xl mx-auto">
+            Track and analyze World of Warcraft PVP statistics for North American players
+          </p>
+        </div>
+
+        <div className="max-w-4xl mx-auto space-y-8">
+          <CharacterSearch onSearch={handleSearch} />
+          
+          {selectedCharacter && (
+            <CharacterProfile
+              characterName={selectedCharacter.name}
+              realmSlug={selectedCharacter.realm}
+              region={selectedCharacter.region}
+            />
+          )}
         </div>
       </div>
     </div>
