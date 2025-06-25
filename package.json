@@ -7,8 +7,7 @@
     "dev:turbo": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "export": "next build"
+    "lint": "next lint"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.80.6",
