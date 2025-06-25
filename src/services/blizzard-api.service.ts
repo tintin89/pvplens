@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 import { ApiError, BlizzardApiResponse } from '@/types/wow';
 
 export class BlizzardApiService {
@@ -86,7 +86,12 @@ export class BlizzardApiService {
 
       return this.accessToken;
     } catch (error) {
-      console.error('Failed to get access token:', error);
+      console.error('❌ Failed to get access token');
+      const axiosError = error as AxiosError; // Type assertion for axios error
+      if (axiosError.response) {
+        console.error('Response status:', axiosError.response.status);
+        console.error('Response data:', axiosError.response.data);
+      }
       return null;
     }
   }

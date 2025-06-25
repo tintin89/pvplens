@@ -101,7 +101,7 @@ export interface CovenantProgress {
     name: string;
   };
   renown_level?: number;
-  soulbinds?: any[];
+  soulbinds?: Record<string, unknown>[];
 }
 
 // PVP Specific Types
@@ -187,6 +187,17 @@ export interface SearchFilters {
   minRating?: number;
   maxRating?: number;
   bracket?: string;
+}
+
+export interface CharacterMedia {
+  character: Character;
+  assets: MediaAsset[];
+}
+
+export interface MediaAsset {
+  key: string;
+  value: string;
+  file_data_id?: number;
 }
 
 export interface PaginationParams {

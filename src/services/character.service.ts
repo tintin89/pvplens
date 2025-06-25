@@ -3,14 +3,22 @@ import { mockCharacterData } from './mock-data';
 import { 
   Character, 
   CharacterPvpSummary, 
+  CharacterMedia,
   SearchFilters
 } from '@/types/wow';
 
 export class CharacterService extends BlizzardApiService {
   
   private useMockData(): boolean {
-    return !process.env.NEXT_PUBLIC_BLIZZARD_CLIENT_ID || 
-           !process.env.NEXT_PUBLIC_BLIZZARD_CLIENT_SECRET;
+    const hasClientId = process.env.NEXT_PUBLIC_BLIZZARD_CLIENT_ID && 
+                       process.env.NEXT_PUBLIC_BLIZZARD_CLIENT_ID.trim() !== '' &&
+                       !process.env.NEXT_PUBLIC_BLIZZARD_CLIENT_ID.includes('your_client_id');
+    
+    const hasClientSecret = process.env.NEXT_PUBLIC_BLIZZARD_CLIENT_SECRET && 
+                           process.env.NEXT_PUBLIC_BLIZZARD_CLIENT_SECRET.trim() !== '' &&
+                           !process.env.NEXT_PUBLIC_BLIZZARD_CLIENT_SECRET.includes('your_client_secret');
+    
+    return !hasClientId || !hasClientSecret;
   }
 
   /**
@@ -22,20 +30,28 @@ export class CharacterService extends BlizzardApiService {
     region: string = 'us'
   ): Promise<Character> {
     if (this.useMockData()) {
-      // Return mock data for development
+      console.log('🔧 Using mock data - API credentials not configured');
       await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
       return mockCharacterData.profile as Character;
     }
 
-    const endpoint = `/profile/wow/character/${realmSlug}/${characterName.toLowerCase()}`;
-    return this.get<Character>(endpoint, {
-      namespace: `profile-${region}`,
-      locale: 'en_US'
-    });
+    try {
+      console.log(`🌐 Fetching character profile: ${characterName}@${realmSlug} (${region})`);
+      const endpoint = `/profile/wow/character/${realmSlug}/${characterName.toLowerCase()}`;
+      const response = await this.get<Character>(endpoint, {
+        namespace: `profile-${region}`,
+        locale: 'en_US'
+      });
+      console.log('✅ Character profile fetched successfully');
+      return response;
+    } catch (error) {
+      console.error('❌ Failed to fetch character profile:', error);
+      throw error;
+    }
   }
 
   /**
-   * Get character PvP summary
+   * Get character PvP summary with detailed bracket data
    */
   async getCharacterPvpSummary(
     realmSlug: string, 
@@ -43,16 +59,98 @@ export class CharacterService extends BlizzardApiService {
     region: string = 'us'
   ): Promise<CharacterPvpSummary> {
     if (this.useMockData()) {
-      // Return mock data for development
+      console.log('🔧 Using mock PvP data - API credentials not configured');
       await new Promise(resolve => setTimeout(resolve, 300)); // Simulate API delay
       return mockCharacterData.pvp as CharacterPvpSummary;
     }
 
-    const endpoint = `/profile/wow/character/${realmSlug}/${characterName.toLowerCase()}/pvp-summary`;
-    return this.get<CharacterPvpSummary>(endpoint, {
-      namespace: `profile-${region}`,
-      locale: 'en_US'
-    });
+    try {
+      console.log(`🛡️ Fetching PvP summary: ${characterName}@${realmSlug} (${region})`);
+      const endpoint = `/profile/wow/character/${realmSlug}/${characterName.toLowerCase()}/pvp-summary`;
+      const response = await this.get<Record<string, unknown>>(endpoint, {
+        namespace: `profile-${region}`,
+        locale: 'en_US'
+      });
+      
+      console.log('✅ PvP summary fetched successfully');
+
+      // Transform the API response to match our expected structure
+      const transformedResponse = await this.transformPvpSummary(response);
+      
+      return transformedResponse;
+    } catch (error) {
+      console.error('❌ Failed to fetch PvP summary:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Transform raw PvP summary to expected format by fetching individual bracket data
+   */
+  private async transformPvpSummary(rawSummary: Record<string, unknown>): Promise<CharacterPvpSummary> {
+    const brackets: Record<string, unknown> = {};
+    
+    if (rawSummary.brackets && Array.isArray(rawSummary.brackets)) {
+      console.log(`🔗 Fetching ${rawSummary.brackets.length} bracket details...`);
+      
+      // Fetch each bracket's detailed data
+      for (const bracketLink of rawSummary.brackets) {
+        try {
+          // Extract bracket type from URL (e.g., "2v2", "3v3", "shuffle-mage-frost")
+          const urlParts = bracketLink.href.split('/');
+          const bracketType = urlParts[urlParts.length - 1].split('?')[0];
+          
+          // Fetch the bracket data directly using the full URL
+          const bracketData = await this.fetchBracketData(bracketLink.href);
+          
+          if (bracketData) {
+            brackets[bracketType] = {
+              rating: (bracketData.rating as number) || 0,
+              bracket: {
+                slug: bracketType
+              },
+              season_match_statistics: (bracketData.season_match_statistics as {
+                won: number;
+                lost: number;
+                played: number;
+              }) || {
+                won: 0,
+                lost: 0,
+                played: 0
+              }
+            };
+          }
+        } catch (error) {
+          console.warn(`⚠️ Failed to fetch bracket data for ${bracketLink.href}:`, error);
+          // Continue with other brackets even if one fails
+        }
+      }
+    }
+
+    return {
+      brackets,
+      honor_level: (rawSummary.honor_level as number) || 0,
+      honorable_kills: (rawSummary.honorable_kills as number) || 0,
+      pvp_map_statistics: (rawSummary.pvp_map_statistics as unknown[]) || [],
+      character: rawSummary.character
+    } as CharacterPvpSummary;
+  }
+
+  /**
+   * Fetch individual bracket data from Blizzard API
+   */
+  private async fetchBracketData(bracketUrl: string): Promise<Record<string, unknown> | null> {
+    try {
+      // Extract the endpoint path from the full URL
+      const url = new URL(bracketUrl);
+      const endpoint = url.pathname + url.search;
+      
+      const response = await this.get<Record<string, unknown>>(endpoint);
+      return response;
+    } catch (error) {
+      console.error(`❌ Failed to fetch bracket data from ${bracketUrl}:`, error);
+      return null;
+    }
   }
 
   /**
@@ -62,15 +160,19 @@ export class CharacterService extends BlizzardApiService {
     realmSlug: string, 
     characterName: string, 
     region: string = 'us'
-  ): Promise<any> {
+  ): Promise<CharacterMedia> {
     if (this.useMockData()) {
       // Return mock data for development
       await new Promise(resolve => setTimeout(resolve, 200)); // Simulate API delay
-      return mockCharacterData.media;
+      // Mock character media data structure
+      return {
+        character: mockCharacterData.profile,
+        assets: mockCharacterData.media.assets
+      } as CharacterMedia;
     }
 
     const endpoint = `/profile/wow/character/${realmSlug}/${characterName.toLowerCase()}/character-media`;
-    return this.get<any>(endpoint, {
+    return this.get<CharacterMedia>(endpoint, {
       namespace: `profile-${region}`,
       locale: 'en_US'
     });
@@ -112,8 +214,8 @@ export class CharacterService extends BlizzardApiService {
    */
   async searchCharacters(
     characterName: string,
-    region: string = 'us',
-    filters?: SearchFilters
+    _region: string = 'us', // eslint-disable-line @typescript-eslint/no-unused-vars
+    _filters?: SearchFilters // eslint-disable-line @typescript-eslint/no-unused-vars
   ) {
     // Mock implementation - in production this would use the Blizzard API search
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -139,8 +241,8 @@ export class CharacterService extends BlizzardApiService {
    */
   async getPvpLeaderboard(
     bracket: string,
-    region: string = 'us',
-    season?: number
+    _region: string = 'us', // eslint-disable-line @typescript-eslint/no-unused-vars
+    _season?: number // eslint-disable-line @typescript-eslint/no-unused-vars
   ) {
     // Mock implementation
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -163,7 +265,7 @@ export class CharacterService extends BlizzardApiService {
   /**
    * Get current PvP season (mock implementation for now)
    */
-  async getCurrentPvpSeason(region: string = 'us') {
+  async getCurrentPvpSeason(_region: string = 'us') { // eslint-disable-line @typescript-eslint/no-unused-vars
     // Mock implementation
     await new Promise(resolve => setTimeout(resolve, 200));
     
@@ -185,7 +287,7 @@ export class CharacterService extends BlizzardApiService {
     try {
       await this.getCharacterProfile(realmSlug, characterName, region);
       return true;
-    } catch (error) {
+    } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       return false;
     }
   }

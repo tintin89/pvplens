@@ -24,9 +24,10 @@ interface CharacterProfileProps {
 
 interface BracketData {
   rating: number;
-  bracket: {
+  bracket?: {
     slug: string;
   };
+  bracket_id?: string;
   season_match_statistics?: {
     won: number;
     lost: number;
@@ -181,19 +182,23 @@ export function CharacterProfile({ characterName, realmSlug, region }: Character
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {Object.entries(data.pvp.brackets).map(([bracketType, bracketData]: [string, BracketData]) => (
-                    <div key={bracketType} className="wow-card bg-black/20 p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-white">
-                          {formatBracketName(bracketData.bracket.slug)}
-                        </h4>
-                        <Badge 
-                          variant={getRatingTier(bracketData.rating).toLowerCase() as 'gladiator' | 'elite' | 'duelist' | 'rival' | 'challenger' | 'combatant' | 'unranked'}
-                          className="text-xs"
-                        >
-                          {getRatingTier(bracketData.rating)}
-                        </Badge>
-                      </div>
+                  {Object.entries(data.pvp.brackets || {}).map(([bracketType, bracketData]: [string, BracketData]) => {
+                    // Safe access to bracket slug with fallbacks
+                    const bracketSlug = bracketData?.bracket?.slug || bracketData?.bracket_id || bracketType;
+                    
+                    return (
+                      <div key={bracketType} className="wow-card bg-black/20 p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-medium text-white">
+                            {formatBracketName(bracketSlug)}
+                          </h4>
+                          <Badge 
+                            variant={getRatingTier(bracketData.rating).toLowerCase() as 'gladiator' | 'elite' | 'duelist' | 'rival' | 'challenger' | 'combatant' | 'unranked'}
+                            className="text-xs"
+                          >
+                            {getRatingTier(bracketData.rating)}
+                          </Badge>
+                        </div>
                       
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
@@ -237,7 +242,8 @@ export function CharacterProfile({ characterName, realmSlug, region }: Character
                         )}
                       </div>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               </CardContent>
             </Card>
