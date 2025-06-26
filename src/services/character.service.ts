@@ -14,9 +14,9 @@ export class CharacterService extends BlizzardApiService {
                        process.env.NEXT_PUBLIC_BLIZZARD_CLIENT_ID.trim() !== '' &&
                        !process.env.NEXT_PUBLIC_BLIZZARD_CLIENT_ID.includes('your_client_id');
     
-    const hasClientSecret = process.env.NEXT_PUBLIC_BLIZZARD_CLIENT_SECRET && 
-                           process.env.NEXT_PUBLIC_BLIZZARD_CLIENT_SECRET.trim() !== '' &&
-                           !process.env.NEXT_PUBLIC_BLIZZARD_CLIENT_SECRET.includes('your_client_secret');
+    const hasClientSecret = process.env.BLIZZARD_CLIENT_SECRET && 
+                           process.env.BLIZZARD_CLIENT_SECRET.trim() !== '' &&
+                           !process.env.BLIZZARD_CLIENT_SECRET.includes('your_client_secret');
     
     return !hasClientId || !hasClientSecret;
   }
