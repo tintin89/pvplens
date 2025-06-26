@@ -10,15 +10,19 @@ import {
 export class CharacterService extends BlizzardApiService {
   
   private useMockData(): boolean {
+    // Check if API configuration is available
     const hasClientId = process.env.NEXT_PUBLIC_BLIZZARD_CLIENT_ID && 
                        process.env.NEXT_PUBLIC_BLIZZARD_CLIENT_ID.trim() !== '' &&
                        !process.env.NEXT_PUBLIC_BLIZZARD_CLIENT_ID.includes('your_client_id');
     
-    const hasClientSecret = process.env.BLIZZARD_CLIENT_SECRET && 
-                           process.env.BLIZZARD_CLIENT_SECRET.trim() !== '' &&
-                           !process.env.BLIZZARD_CLIENT_SECRET.includes('your_client_secret');
+    const hasApiBaseUrl = process.env.NEXT_PUBLIC_BLIZZARD_API_BASE_URL && 
+                         process.env.NEXT_PUBLIC_BLIZZARD_API_BASE_URL.trim() !== '';
     
-    return !hasClientId || !hasClientSecret;
+    const hasOAuthUrl = process.env.NEXT_PUBLIC_BLIZZARD_OAUTH_URL && 
+                       process.env.NEXT_PUBLIC_BLIZZARD_OAUTH_URL.trim() !== '';
+    
+    // If basic config is missing, use mock data
+    return !hasClientId || !hasApiBaseUrl || !hasOAuthUrl;
   }
 
   /**
