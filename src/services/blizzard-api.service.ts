@@ -60,30 +60,28 @@ export class BlizzardApiService {
     }
 
     try {
-      const clientId = process.env.NEXT_PUBLIC_BLIZZARD_CLIENT_ID;
-      const clientSecret = process.env.BLIZZARD_CLIENT_SECRET; // Remove NEXT_PUBLIC_ for security
+      // Use server-side API route for token generation (more secure)
+      const response = await fetch('/api/auth/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-      if (!clientId || !clientSecret) {
-        console.error('Missing credentials:', { clientId: !!clientId, clientSecret: !!clientSecret });
-        throw new Error('Blizzard API credentials not configured');
+      if (!response.ok) {
+        console.error('Failed to get access token from API route:', response.status);
+        return null;
       }
 
-      const credentials = btoa(`${clientId}:${clientSecret}`);
+      const data = await response.json();
       
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BLIZZARD_OAUTH_URL}/token`,
-        'grant_type=client_credentials',
-        {
-          headers: {
-            'Authorization': `Basic ${credentials}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        }
-      );
+      if (data.error) {
+        console.error('API route error:', data.error);
+        return null;
+      }
 
-      const { access_token, expires_in } = response.data;
-      this.accessToken = access_token;
-      this.tokenExpiry = Date.now() + (expires_in * 1000) - 60000; // Subtract 1 minute for safety
+      this.accessToken = data.access_token;
+      this.tokenExpiry = Date.now() + (data.expires_in * 1000) - 60000; // Subtract 1 minute for safety
 
       return this.accessToken;
     } catch (error) {
